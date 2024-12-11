@@ -4,7 +4,7 @@
 
 substitutions:
   name: esp32-s3box-3
-  friendly_name: ESP32-S3-Box-3
+  friendly_name: Norman
   
   external_media_player: your_media_player  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
@@ -1814,7 +1814,7 @@ display:
       - id: saver_page ##### screen saver display page #####
         lambda: |-
           it.fill(id(black));
-           
+          
           const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
           const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
           it.printf(160, 28, id(my_font5), light_blue, TextAlign::CENTER, "%s %d %s", days[id(ha_time).now().day_of_week - 1], id(ha_time).now().day_of_month, months[id(ha_time).now().month - 1]);
@@ -1823,7 +1823,8 @@ display:
           } else {
             it.strftime(160, 88, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
           }
-          it.printf(160, 181, id(my_font2), light_blue, TextAlign::CENTER, "%.f°C", id(s3temp).state); // remove for no sensor version
+          float temp_f = id(s3temp).state * 1.8 + 32; // Convert Celsius to Fahrenheit
+          it.printf(160, 181, id(my_font2), light_blue, TextAlign::CENTER, "%.f°F", temp_f); // Updated to display in Fahrenheit
          
       - id: ota_page ##### firmware uploading page #####
         lambda: |-
