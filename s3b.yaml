@@ -3,10 +3,11 @@
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
-  name: esp32-s3box-3
+  name: "norman"
   friendly_name: Norman
+  timezone: "US/Central"
   
-  external_media_player: your_media_player  ##change this to your external media player enity_id: do not include media_player.
+  external_media_player: norman_speaker_raspiaudio_muse_luxe_6d87e8  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
   tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
   
@@ -147,8 +148,13 @@ wifi:
         id(wifi_connection) = false;
 captive_portal:      
 time:
-  - platform: homeassistant
+  - platform: sntp
     id: ha_time
+    timezone: ${timezone}
+    servers:
+      - 0.pool.ntp.org
+      - 1.pool.ntp.org
+      - 2.pool.ntp.org
     
 interval:
   - interval: 30s
