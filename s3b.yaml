@@ -141,12 +141,13 @@ wifi:
   on_connect:
     - lambda: |-
         id(wifi_connection) = true;
-    - display.page.show: idle_page
+    - display.page.show: saver_page
     - component.update: s3_box_lcd
   on_disconnect:
     - lambda: |-
         id(wifi_connection) = false;
-captive_portal:      
+captive_portal:
+
 time:
   - platform: sntp
     id: ha_time
@@ -259,7 +260,14 @@ select:
                     state: !lambda 'return "12 Hr";'
         - component.update: s3_box_lcd
                 
-script:           
+script:
+  ###### Script to return to saver_page after 5 seconds ######
+  - id: back_to_saver
+    mode: restart  # Restart the timer if the script is executed again
+    then:
+      - delay: 5s
+      - display.page.show: saver_page
+
   - id: set_volume
     then:
       - media_player.volume_set:
@@ -943,27 +951,30 @@ voice_assistant:
           - display.page.show: listening_page
           - component.update: s3_box_lcd
         else:
-          if:
-            condition:
-              and:
-                - switch.is_on: wake_sound
-                - switch.is_on: output_audio
-            then:
-              - homeassistant.service:
-                  service: media_player.play_media
-                  data:
-                    entity_id: media_player.${external_media_player}
-                    media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
-                    media_content_type: music
+          - if:
+              condition:
+                and:
+                  - switch.is_on: wake_sound
+                  - switch.is_on: output_audio
+              then:
+                - homeassistant.service:
+                    service: media_player.play_media
+                    data:
+                      entity_id: media_player.${external_media_player}
+                      media_content_id: '${home_assistant_host}/local/sounds/awake.mp3'
+                      media_content_type: music
     - media_player.stop
+
   on_start:    
     if: 
       condition:
         - display.is_displaying_page: listening_page
         - display.is_displaying_page: thinking_page
       then:
-        - display.page.show: idle_page
+        - display.page.show: saver_page
         - component.update: s3_box_lcd
+        - logger.log: "Defaulting to saver_page on start."
+
   on_listening:
     - text_sensor.template.publish:
         id: text_request
@@ -974,17 +985,21 @@ voice_assistant:
     - script.execute: saver_enabled
     - display.page.show: listening_page
     - component.update: s3_box_lcd
+
   on_stt_end:
     - text_sensor.template.publish:
         id: text_request
         state: !lambda return x;
+
   on_stt_vad_end: 
     - display.page.show: thinking_page
     - component.update: s3_box_lcd
+
   on_tts_start:
     - text_sensor.template.publish:
         id: text_response
         state: !lambda return x;
+
   on_tts_end:
     - if:
         condition: 
@@ -1009,7 +1024,7 @@ voice_assistant:
                 media_content_type: music
                 announce: "false"
     - delay: 5s
-    - display.page.show: idle_page
+    - display.page.show: saver_page
     - component.update: s3_box_lcd
    
   on_error:
@@ -1025,13 +1040,13 @@ voice_assistant:
               condition:
                 - display.is_displaying_page: error_page
               then:
-                - display.page.show: idle_page
+                - display.page.show: saver_page
                 - component.update: s3_box_lcd
 
   on_idle:
-    - display.page.show: idle_page
+    - display.page.show: saver_page
     - component.update: s3_box_lcd 
-    
+
   on_end:
     - if:
         condition:
@@ -1045,21 +1060,20 @@ voice_assistant:
                 voice_assistant.is_running:
           - delay: 100ms
           - micro_wake_word.start
-
         else:
-          if:
-            condition: 
-              - switch.is_off: mute_switch  
-            then:              
-              - wait_until:
-                  not:
-                    voice_assistant.is_running:
-              - lambda: id(va).set_use_wake_word(false);
-              - voice_assistant.stop:    
-              - delay: 100ms
-              - lambda: id(va).set_use_wake_word(true);
-              - delay: 100ms
-              - voice_assistant.start 
+          - if:
+              condition: 
+                - switch.is_off: mute_switch  
+              then:              
+                - wait_until:
+                    not:
+                      voice_assistant.is_running:
+                - lambda: id(va).set_use_wake_word(false);
+                - voice_assistant.stop:    
+                - delay: 100ms
+                - lambda: id(va).set_use_wake_word(true);
+                - delay: 100ms
+                - voice_assistant.start 
     - if:
         condition: 
           and:
@@ -1085,14 +1099,18 @@ voice_assistant:
               then:
                 - lambda: id(va).set_use_wake_word(true);
                 - voice_assistant.start      
+
   on_timer_started:
     - script.execute: timer_ending
     - component.update: s3_box_lcd
+
   on_timer_cancelled:
     - lambda: id(time_remaining_0).publish_state ("0:00:00"); 
     - component.update: s3_box_lcd
+
   on_timer_updated:
     - component.update: s3_box_lcd
+
   on_timer_tick:
     - lambda: |-
         int seconds = timers[0].seconds_left;
@@ -1101,25 +1119,26 @@ voice_assistant:
         seconds %= 60;
         id(time_remaining_0).publish_state(str_sprintf("%d:%02d:%02d", hours, minutes, seconds)); 
     - component.update: s3_box_lcd
+
   on_timer_finished:
-    if: 
-      condition:
-        - switch.is_on: output_audio
-      then:
-        - switch.turn_on: timer_ringing
-        - script.execute: timer_started_external
-        - display.page.show: timer_finished_page
-        - component.update: s3_box_lcd
-      else:
-        - if:
-            condition:
-              - switch.is_off: output_audio
-            then:
-              - switch.turn_on: timer_ringing
-              - script.execute: timer_started
-              - display.page.show: timer_finished_page
-              - component.update: s3_box_lcd
-    
+    - if: 
+        condition:
+          - switch.is_on: output_audio
+        then:
+          - switch.turn_on: timer_ringing
+          - script.execute: timer_started_external
+          - display.page.show: timer_finished_page
+          - component.update: s3_box_lcd
+        else:
+          - if:
+              condition:
+                - switch.is_off: output_audio
+              then:
+                - switch.turn_on: timer_ringing
+                - script.execute: timer_started
+                - display.page.show: timer_finished_page
+                - component.update: s3_box_lcd
+
 image:
   - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/error.png"
     id: error_img
@@ -2189,7 +2208,6 @@ touchscreen:
       - script.execute: saver_enabled 
    
 binary_sensor:
-###### top left hand physical button #######
   - platform: gpio
     id: top_left_button
     pin:
@@ -2198,22 +2216,17 @@ binary_sensor:
       inverted: true
       ignore_strapping_warning: true
     on_press:
-      - if:
-          condition:
-            - display.is_displaying_page: saver_page
-          then:
-            - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-            - display.page.show: idle_page
-            - script.execute: saver_enabled
-            - component.update: s3_box_lcd
-          else:
-            if:
-              condition:
-                - display.is_displaying_page: idle_page
-              then:
-                - script.execute: saver_enabled
-                - display.page.show: saver_page
-                - component.update: s3_box_lcd
+      if:
+        condition:
+          - display.is_displaying_page: idle_page  
+        then:
+          - script.execute: saver_enabled
+        else: 
+          - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
+          - display.page.show: idle_page
+          - component.update: s3_box_lcd
+          - script.stop: back_to_saver
+          - script.execute: back_to_saver
             
 # #######     red circle home button   #####################
   - platform: gt911
@@ -2229,6 +2242,8 @@ binary_sensor:
           - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
           - display.page.show: idle_page
           - component.update: s3_box_lcd
+          - script.stop: back_to_saver
+          - script.execute: back_to_saver
 
 ###### radar sensor ########   # remove for no sensor version
   - platform: gpio
@@ -2252,6 +2267,7 @@ binary_sensor:
 ##### satus bar buttons #####             
   - platform: touchscreen
     pages:
+      - saver_page
       - idle_page
       - info_page
       - lights_page
@@ -2275,6 +2291,7 @@ binary_sensor:
 
   - platform: touchscreen
     pages:
+      - saver_page
       - idle_page
       - info_page
       - lights_page
@@ -2295,10 +2312,13 @@ binary_sensor:
       then:
         - display.page.show: wifi_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
 
   - platform: touchscreen
     pages:
+      - saver_page
       - idle_page
       - info_page
       - lights_page
@@ -2329,6 +2349,7 @@ binary_sensor:
 
   - platform: touchscreen
     pages:
+      - saver_page
       - idle_page
       - info_page
       - lights_page
@@ -2349,9 +2370,12 @@ binary_sensor:
       then:
         - switch.toggle: mute_switch
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     pages:
+      - saver_page
       - idle_page
       - info_page
       - lights_page
@@ -2372,6 +2396,8 @@ binary_sensor:
       then:
         - display.page.show: alarm_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
 ##### settings page ####
   - platform: touchscreen
@@ -2388,6 +2414,8 @@ binary_sensor:
       then:
         - display.page.show: ww_set_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: settings_page
@@ -2403,6 +2431,8 @@ binary_sensor:
       then:
         - display.page.show: ss_set_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: settings_page
@@ -2418,6 +2448,8 @@ binary_sensor:
       then:
         - display.page.show: info_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         
   - platform: touchscreen
     page_id: settings_page
@@ -2433,6 +2465,8 @@ binary_sensor:
       then:
         - display.page.show: device_set_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: settings_page
@@ -2456,6 +2490,8 @@ binary_sensor:
       then:
         - switch.turn_off: mute_switch    
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         
   - platform: touchscreen
     pages:
@@ -2472,6 +2508,8 @@ binary_sensor:
       then:
         - display.page.show: settings_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 #########################################
 ##### idle / home page ####
   - platform: touchscreen
@@ -2488,6 +2526,8 @@ binary_sensor:
       then:
         - display.page.show: climate_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: idle_page
@@ -2503,6 +2543,8 @@ binary_sensor:
       then:
         - display.page.show: lights_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: idle_page
@@ -2518,6 +2560,8 @@ binary_sensor:
       then:
         - display.page.show: template_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: idle_page
@@ -2537,9 +2581,13 @@ binary_sensor:
           then:
             - display.page.show: media_page
             - component.update: s3_box_lcd
+            - script.stop: back_to_saver       # Stop the previous timer
+            - script.execute: back_to_saver   # Restart the timer
           else:
             - display.page.show: ext_media_page
             - component.update: s3_box_lcd
+            - script.stop: back_to_saver       # Stop the previous timer
+            - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: idle_page
@@ -2555,6 +2603,8 @@ binary_sensor:
       then:
         - display.page.show: scenes_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
   - platform: touchscreen
     page_id: idle_page
@@ -2569,7 +2619,9 @@ binary_sensor:
       max_length: 500ms
       then:
         - display.page.show: settings_page
-        - component.update: s3_box_lcd   
+        - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer   
             
 #### climate page #####
   - platform: touchscreen
@@ -2796,6 +2848,8 @@ binary_sensor:
               id(speaker_volume) -= 1;
             }
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         - script.execute: set_volume
 
   - platform: touchscreen
@@ -2816,6 +2870,8 @@ binary_sensor:
               id(speaker_volume) += 1;
             }
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         - script.execute: set_volume
 
   - platform: touchscreen
@@ -2853,6 +2909,8 @@ binary_sensor:
       then:
         - switch.toggle: media_mute
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 #### external media ####        
   - platform: touchscreen
     page_id: ext_media_page
@@ -2871,6 +2929,8 @@ binary_sensor:
             data:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
         
   - platform: touchscreen
@@ -2890,6 +2950,8 @@ binary_sensor:
             data:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
 
   - platform: touchscreen
@@ -2909,6 +2971,8 @@ binary_sensor:
             data:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
 
         
   - platform: touchscreen
@@ -2925,6 +2989,8 @@ binary_sensor:
       then:
         - switch.toggle: ext_media_mute
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         
   - platform: touchscreen
     page_id: ext_media_page
@@ -2943,6 +3009,8 @@ binary_sensor:
             data:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         - script.execute: set_volume
 
   - platform: touchscreen
@@ -2962,6 +3030,8 @@ binary_sensor:
             data:
               entity_id: media_player.${external_media_player}
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         - script.execute: set_volume
 
 ##### scenes page ####
@@ -3081,6 +3151,8 @@ binary_sensor:
       then:
         - display.page.show: timeout_settings_page
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
  
   - platform: touchscreen
     page_id: ss_set_page
@@ -3096,6 +3168,8 @@ binary_sensor:
       then:
         - switch.toggle: s_saver
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
       
   - platform: touchscreen # remove for no sensor version
     page_id: ss_set_page
@@ -3111,6 +3185,8 @@ binary_sensor:
       then:
         - switch.toggle: s_saver_presc
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
         
   - platform: touchscreen
     page_id: ss_set_page
@@ -3125,7 +3201,9 @@ binary_sensor:
       max_length: 500ms
       then:
         - switch.toggle: s_saver_mode
-        - component.update: s3_box_lcd   
+        - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer   
         
 ##### voice settings page #####
   - platform: touchscreen
@@ -3145,6 +3223,8 @@ binary_sensor:
             operation: Next
             cycle: true   
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
        
   - platform: touchscreen
     page_id: ww_set_page
@@ -3160,6 +3240,8 @@ binary_sensor:
       then:
         - switch.toggle: mute_response_switch  
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
        
   - platform: touchscreen
     page_id: ww_set_page
@@ -3175,6 +3257,8 @@ binary_sensor:
       then:
         - switch.toggle: wake_sound
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
       
   - platform: touchscreen
     page_id: ww_set_page
@@ -3187,22 +3271,24 @@ binary_sensor:
     on_click:
         - switch.toggle: display_conversation
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver       # Stop the previous timer
+        - script.execute: back_to_saver   # Restart the timer
    
 ##### touch to wake screen #####
-  - platform: touchscreen
-    page_id: saver_page
-    id: ss_wake
-    internal: true
-    x_min: 0
-    x_max: 320
-    y_min: 0
-    y_max: 240
-    on_click:
-      min_length: 10ms
-      max_length: 500ms
-      then:
-        - display.page.show: idle_page
-        - component.update: s3_box_lcd
+#  - platform: touchscreen
+#    page_id: saver_page
+#    id: ss_wake
+#    internal: true
+#    x_min: 0
+#    x_max: 320
+#    y_min: 0
+#    y_max: 240
+#    on_click:
+#      min_length: 10ms
+#      max_length: 500ms
+#      then:
+#        - display.page.show: saver_page
+#        - component.update: s3_box_lcd
      
 ##### Timer finished page #####
   - platform: touchscreen
@@ -3218,7 +3304,7 @@ binary_sensor:
       max_length: 500ms
       then:
         - switch.turn_off: timer_ringing
-        - display.page.show: idle_page
+        - display.page.show: saver_page
         - component.update: s3_box_lcd
 
 ##### Timeout settings buttons #####
@@ -3241,6 +3327,8 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
 
   - id: ss_sleep_up
     page_id: timeout_settings_page
@@ -3258,6 +3346,8 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
         
   - id: ss_blank_down
     page_id: timeout_settings_page
@@ -3278,6 +3368,8 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
 
   - id: ss_blank_up
     page_id: timeout_settings_page
@@ -3295,6 +3387,8 @@ binary_sensor:
             call.set_value(sleep);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
         
         
         
@@ -3319,6 +3413,8 @@ binary_sensor:
             call.set_value(bright);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
 
   - id: ss_bright_up
     page_id: timeout_settings_page
@@ -3336,6 +3432,9 @@ binary_sensor:
             call.set_value(bright);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
+
 ##### device settings page #####        
   - id: s_default_bright_down
     page_id: device_set_page
@@ -3356,6 +3455,8 @@ binary_sensor:
             call.set_value(default_bright);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
         
   - id: s_default_bright_up
     page_id: device_set_page
@@ -3373,6 +3474,8 @@ binary_sensor:
             call.set_value(default_bright);
             call.perform();
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
 
   - id: ext_media_toggle
     page_id: device_set_page
@@ -3386,6 +3489,8 @@ binary_sensor:
       then:
         - switch.toggle: output_audio
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
 
   - platform: touchscreen
     page_id: device_set_page
@@ -3403,6 +3508,8 @@ binary_sensor:
             operation: Next
             cycle: true   
         - component.update: s3_box_lcd
+        - script.stop: back_to_saver  # Stop current timer
+        - script.execute: back_to_saver  # Restart timer
 
           
 ##### alarm panel buttons #####
