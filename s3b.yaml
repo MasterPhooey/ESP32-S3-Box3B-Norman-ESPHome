@@ -6,8 +6,10 @@ substitutions:
   name: "norman"
   friendly_name: Norman
   timezone: "US/Central"
+  outdoor_temp_sensor: "sensor.weather_outdoor_temperature"
+  rain_rate_sensor: "sensor.weather_daily_rain_rate_piezo"
   
-  external_media_player: norman_speaker_raspiaudio_muse_luxe_6d87e8  ##change this to your external media player enity_id: do not include media_player.
+  external_media_player: norman_office_speaker_raspiaudio_muse_luxe_6d87e8  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
   tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
   
@@ -674,6 +676,14 @@ light:
     default_transition_length: 50ms
     
 sensor:
+  - platform: homeassistant
+    id: weather_outdoor_temperature
+    entity_id: ${outdoor_temp_sensor}
+
+  - platform: homeassistant
+    id: weather_daily_rain_rate_piezo
+    entity_id: ${rain_rate_sensor}
+
   - platform: aht10 # remove for no sensor version
     i2c_id: bus_b
     variant: AHT20
@@ -1311,6 +1321,7 @@ font:
       - "\U000F1A1B"#gas
       - "\U000F1C3B"#battery charging/usb powered
       - "\U000F1C6F"#info
+      - "\U000F0596"#rain
 
       
   - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
@@ -1840,16 +1851,44 @@ display:
         lambda: |-
           it.fill(id(black));
           
-          const char *days[] {"${sunday}","${monday}","${tuesday}","${wednesday}","${thursday}","${friday}","${saturday}"};
-          const char *months[] {"${jan}","${feb}","${mar}","${apr}","${may}","${jun}","${jul}","${aug}","${sept}","${oct}","${nov}","${dec}"};
-          it.printf(160, 28, id(my_font5), light_blue, TextAlign::CENTER, "%s %d %s", days[id(ha_time).now().day_of_week - 1], id(ha_time).now().day_of_month, months[id(ha_time).now().month - 1]);
-          if(id(time_display_format).state == "24 Hr") {
-            it.strftime(160, 88, id(my_font82), TextAlign::CENTER, "%H:%M", id(ha_time).now());
+          // Day and date display
+          const char *days[] {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+          const char *months[] {"January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"};
+          it.printf(160, 28, id(my_font5), light_blue, TextAlign::CENTER, "%s %d %s", 
+                    days[id(ha_time).now().day_of_week - 1], 
+                    id(ha_time).now().day_of_month, 
+                    months[id(ha_time).now().month - 1]);
+
+          // Time display
+          if (id(time_display_format).state == "24 Hr") {
+            it.strftime(160, 83, id(my_font82), TextAlign::CENTER, "%H:%M", id(ha_time).now());
           } else {
-            it.strftime(160, 88, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
+            it.strftime(160, 83, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
           }
+
+          // Temperature section
+          // Indoor Temperature
           float temp_f = id(s3temp).state * 1.8 + 32; // Convert Celsius to Fahrenheit
-          it.printf(160, 181, id(my_font2), light_blue, TextAlign::CENTER, "%.f°F", temp_f); // Updated to display in Fahrenheit
+          it.printf(80, 160, id(my_font6), light_blue, TextAlign::CENTER, "%.f°", temp_f); // Indoor temp
+          it.printf(70, 200, id(my_font5), Color::WHITE, TextAlign::CENTER, "In"); // Label
+
+          // Outdoor Temperature
+          if (!isnan(id(weather_outdoor_temperature).state)) { // Use ID for the substituted sensor
+            float temp_outdoor_f = id(weather_outdoor_temperature).state; // Use as-is (already in Fahrenheit)
+            it.printf(260, 160, id(my_font6), light_blue, TextAlign::CENTER, "%.f°", temp_outdoor_f); // Outdoor temp moved right
+            it.printf(250, 200, id(my_font5), Color::WHITE, TextAlign::CENTER, "Out"); // Label moved right
+          } else {
+            it.printf(260, 160, id(my_font6), red, TextAlign::CENTER, "N/A");
+            it.printf(250, 200, id(my_font5), Color::WHITE, TextAlign::CENTER, "Out");
+          }
+
+          // Rain icon and daily rain rate
+          it.printf(140, 140, id(icon_font_55), white, "\U000F0596"); // Rain icon
+          if (!isnan(id(weather_daily_rain_rate_piezo).state)) { // Use ID for the substituted sensor
+            it.printf(140, 175, id(my_font5), light_blue, "%.2f", id(weather_daily_rain_rate_piezo).state); // Rain rate
+          } else {
+            it.printf(140, 175, id(my_font5), red, "N/A"); // Display N/A if rain rate is not available
+          }
          
       - id: ota_page ##### firmware uploading page #####
         lambda: |-
