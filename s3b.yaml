@@ -3,11 +3,13 @@
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
-  name: "norman"
-  friendly_name: Norman
+  name: "norman-office"
+  friendly_name: Norman Office
   timezone: "US/Central"
   outdoor_temp_sensor: "sensor.weather_outdoor_temperature"
   rain_rate_sensor: "sensor.weather_daily_rain_rate_piezo"
+  wind_gust_sensor: "sensor.weather_max_daily_wind_gust"
+  lightning_count_sensor: "sensor.weather_lightning_strikes"
   
   external_media_player: norman_office_speaker_raspiaudio_muse_luxe_6d87e8  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
@@ -163,6 +165,8 @@ interval:
   - interval: 30s
     then:
       - component.update: s3_box_lcd
+      - script.execute: cycle_display
+
   - interval: 10s
     then:
       - if:
@@ -263,6 +267,16 @@ select:
         - component.update: s3_box_lcd
                 
 script:
+  - id: cycle_display
+    mode: restart
+    then:
+      - lambda: |-
+          id(display_state)++;
+          if (id(display_state) > 2) {
+            id(display_state) = 0; // Reset to cycle through 0, 1, 2
+          }
+      - component.update: s3_box_lcd
+
   ###### Script to return to saver_page after 5 seconds ######
   - id: back_to_saver
     mode: restart  # Restart the timer if the script is executed again
@@ -412,6 +426,10 @@ script:
           id(current_pin) += "0";  
           ESP_LOGD("increment_digit_0", "Current PIN: %s", id(current_pin).c_str());       
 globals:
+  - id: display_state
+    type: int
+    restore_value: no
+    initial_value: "0"
   - id: wifi_connection
     type: bool
     restore_value: no
@@ -683,6 +701,14 @@ sensor:
   - platform: homeassistant
     id: weather_daily_rain_rate_piezo
     entity_id: ${rain_rate_sensor}
+
+  - platform: homeassistant
+    id: weather_max_daily_wind_gust
+    entity_id: ${wind_gust_sensor}
+
+  - platform: homeassistant
+    id: weather_lightning_count
+    entity_id: ${lightning_count_sensor}
 
   - platform: aht10 # remove for no sensor version
     i2c_id: bus_b
@@ -1322,6 +1348,8 @@ font:
       - "\U000F1C3B"#battery charging/usb powered
       - "\U000F1C6F"#info
       - "\U000F0596"#rain
+      - "\U000F0593"#lighting
+      - "\U000F059D"#wind
 
       
   - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
@@ -1873,7 +1901,7 @@ display:
           it.printf(70, 200, id(my_font5), Color::WHITE, TextAlign::CENTER, "In"); // Label
 
           // Outdoor Temperature
-          if (!isnan(id(weather_outdoor_temperature).state)) { // Use ID for the substituted sensor
+          if (!isnan(id(weather_outdoor_temperature).state)) { // Ensure the value is valid
             float temp_outdoor_f = id(weather_outdoor_temperature).state; // Use as-is (already in Fahrenheit)
             it.printf(260, 160, id(my_font6), light_blue, TextAlign::CENTER, "%.f°", temp_outdoor_f); // Outdoor temp moved right
             it.printf(250, 200, id(my_font5), Color::WHITE, TextAlign::CENTER, "Out"); // Label moved right
@@ -1882,12 +1910,31 @@ display:
             it.printf(250, 200, id(my_font5), Color::WHITE, TextAlign::CENTER, "Out");
           }
 
-          // Rain icon and daily rain rate
-          it.printf(140, 140, id(icon_font_55), white, "\U000F0596"); // Rain icon
-          if (!isnan(id(weather_daily_rain_rate_piezo).state)) { // Use ID for the substituted sensor
-            it.printf(140, 175, id(my_font5), light_blue, "%.2f", id(weather_daily_rain_rate_piezo).state); // Rain rate
-          } else {
-            it.printf(140, 175, id(my_font5), red, "N/A"); // Display N/A if rain rate is not available
+          // Dynamic icon and sensor display (cycling every 30 seconds)
+          if (id(display_state) == 0) {
+            // Rain icon and daily rain rate
+            it.printf(140, 140, id(icon_font_55), white, "\U000F0596"); // Rain icon
+            if (!isnan(id(weather_daily_rain_rate_piezo).state)) {
+              it.printf(140, 175, id(my_font5), light_blue, "%.2f", id(weather_daily_rain_rate_piezo).state); // Rain rate
+            } else {
+              it.printf(140, 175, id(my_font5), red, "N/A");
+            }
+          } else if (id(display_state) == 1) {
+            // Wind gust icon and sensor
+            it.printf(140, 140, id(icon_font_55), white, "\U000F059D"); // Wind icon
+            if (!isnan(id(weather_max_daily_wind_gust).state)) {
+              it.printf(140, 175, id(my_font5), light_blue, "%.1f", id(weather_max_daily_wind_gust).state); // Wind gust
+            } else {
+              it.printf(140, 175, id(my_font5), red, "N/A");
+            }
+          } else if (id(display_state) == 2) {
+            // Lightning icon and sensor
+            it.printf(140, 140, id(icon_font_55), white, "\U000F0593"); // Lightning icon
+            if (!isnan(id(weather_lightning_count).state)) {
+              it.printf(140, 175, id(my_font5), light_blue, "%.0f", id(weather_lightning_count).state); // Lightning count
+            } else {
+              it.printf(140, 175, id(my_font5), red, "N/A");
+            }
           }
          
       - id: ota_page ##### firmware uploading page #####
