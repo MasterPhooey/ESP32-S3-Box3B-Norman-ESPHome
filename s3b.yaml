@@ -87,6 +87,8 @@ esp32:
   flash_size: 16MB
   framework:
     type: esp-idf
+    version: 4.4.8
+    platform_version: 5.4.0
     sdkconfig_options:
       CONFIG_ESP32S3_DEFAULT_CPU_FREQ_240: "y"
       CONFIG_ESP32S3_DATA_CACHE_64KB: "y"
@@ -1136,95 +1138,95 @@ voice_assistant:
                 - component.update: s3_box_lcd
 
 image:
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/error.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/error.png"
     id: error_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/idle.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/idle.png"
     id: idle_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/listening.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/listening.png"
     id: listening_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/thinking.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/thinking.png"
     id: thinking_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/replying.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/replying.png"
     id: replying_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/loading.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/loading.png"
     id: loading_img
     resize: 320x240
     type: RGB24
     use_transparency: true
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/images/logo.png"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/images/logo.png"
     id: logo_img
     resize: 80x75
     type: RGB24
     use_transparency: true 
 font:
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font
     size: 14
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font16
     size: 16
     glyphs:
       '${font_glyphs}'
       
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font2
     size: 72
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font3
     size: 28
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font4
     size: 40
     glyphs:
       '${font_glyphs}'
       
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font18
     size: 18
     glyphs:
       '${font_glyphs}'      
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font5
     size: 22
     glyphs:
       '${font_glyphs}'
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font6
     size: 50
     glyphs:
       '${font_glyphs}'
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/consola.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/consola.ttf"
     id: my_font82
     size: 82
     glyphs:
       '${font_glyphs}'     
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_55
     size: 45
     glyphs: &icon_glyphs
@@ -1312,18 +1314,18 @@ font:
       - "\U000F059E"#wind
 
       
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_180
     size: 180
     glyphs: *icon_glyphs
 
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_80
     size: 75
     glyphs: *icon_glyphs
 
-  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
+  - file: "https://github.com/MasterPhooey/ESP32-S3-Box3-Norman-ESPHome/raw/main/fonts/materialdesignicons-webfont.ttf"
     id: icon_font_60
     size: 60
     glyphs: *icon_glyphs
@@ -1352,7 +1354,7 @@ color:
   - id: purple
     hex: '73264D'
   - id: orange
-    hex: 'CFE2F3'
+    hex: 'ff3300'
   - id: bg_blue
     hex: '032341'
   - id: bg_purple
@@ -2276,7 +2278,7 @@ binary_sensor:
           - script.execute: saver_enabled
         else: 
           - lambda: id(led).turn_on().set_brightness(id(s_default_brightness).state /100).perform();
-          - display.page.show: idle_page
+          - display.page.show: settings_page
           - component.update: s3_box_lcd
           - script.stop: back_to_saver
           - script.execute: back_to_saver
