@@ -80,7 +80,7 @@ esphome:
               id: adf_media_player
               volume: 0 
   project:
-    name: "BigBobbas.s3box"
+    name: "norm.s3box"
     version: "2024.09.01"
 esp32:
   board: esp32s3box
@@ -1875,9 +1875,9 @@ display:
             // Wind gust icon and sensor
             it.printf(140, 140, id(icon_font_55), white, "\U000F059E"); // Wind icon
             if (!isnan(id(weather_max_daily_wind_gust).state)) {
-              it.printf(140, 175, id(my_font5), orange, "%.1f", id(weather_max_daily_wind_gust).state); // Wind gust
+              it.printf(155, 185, id(my_font5), orange, "%.1f", id(weather_max_daily_wind_gust).state); // Wind gust
             } else {
-              it.printf(140, 175, id(my_font5), red, "N/A");
+              it.printf(155, 185, id(my_font5), red, "N/A");
             }
           } else if (id(display_state) == 2) {
             // Lightning icon and sensor
