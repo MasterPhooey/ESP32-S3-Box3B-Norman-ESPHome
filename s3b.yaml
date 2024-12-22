@@ -1842,9 +1842,16 @@ display:
 
           // Time display
           if (id(time_display_format).state == "24 Hr") {
-            it.strftime(160, 83, id(my_font82), TextAlign::CENTER, "%H:%M", id(ha_time).now());
+            char time_buffer[8]; // Increased buffer size to handle "HH:MM" + null terminator
+            snprintf(time_buffer, sizeof(time_buffer), "%02d:%02d", id(ha_time).now().hour, id(ha_time).now().minute);
+            it.printf(160, 83, id(my_font82), TextAlign::CENTER, "%s", time_buffer);
           } else {
-            it.strftime(160, 83, id(my_font2), TextAlign::CENTER, "%l:%M%p", id(ha_time).now());
+            char time_buffer[10]; // Enough for "H:MMAM/PM" + null terminator
+            auto hour = id(ha_time).now().hour % 12; // Convert to 12-hour format
+            if (hour == 0) hour = 12; // Adjust for midnight/noon
+            snprintf(time_buffer, sizeof(time_buffer), "%d:%02d%s", hour, id(ha_time).now().minute, 
+                     (id(ha_time).now().hour >= 12) ? "PM" : "AM");
+            it.printf(160, 83, id(my_font2), TextAlign::CENTER, "%s", time_buffer);
           }
 
           // Temperature section
@@ -1867,25 +1874,25 @@ display:
             // Rain icon and daily rain rate
             it.printf(140, 140, id(icon_font_55), white, "\U000F0596"); // Rain icon
             if (!isnan(id(weather_daily_rain_rate_piezo).state)) {
-              it.printf(140, 175, id(my_font5), orange, "%.2f", id(weather_daily_rain_rate_piezo).state); // Rain rate
+              it.printf(140, 185, id(my_font5), orange, "%.2f", id(weather_daily_rain_rate_piezo).state); // Rain rate
             } else {
-              it.printf(140, 175, id(my_font5), red, "N/A");
+              it.printf(140, 185, id(my_font5), red, "N/A");
             }
           } else if (id(display_state) == 1) {
             // Wind gust icon and sensor
             it.printf(140, 140, id(icon_font_55), white, "\U000F059E"); // Wind icon
             if (!isnan(id(weather_max_daily_wind_gust).state)) {
-              it.printf(155, 185, id(my_font5), orange, "%.1f", id(weather_max_daily_wind_gust).state); // Wind gust
+              it.printf(146, 185, id(my_font5), orange, "%.1f", id(weather_max_daily_wind_gust).state); // Wind gust
             } else {
-              it.printf(155, 185, id(my_font5), red, "N/A");
+              it.printf(146, 185, id(my_font5), red, "N/A");
             }
           } else if (id(display_state) == 2) {
             // Lightning icon and sensor
             it.printf(140, 140, id(icon_font_55), white, "\U000F0593"); // Lightning icon
             if (!isnan(id(weather_lightning_count).state)) {
-              it.printf(140, 175, id(my_font5), orange, "%.0f", id(weather_lightning_count).state); // Lightning count
+              it.printf(157, 185, id(my_font5), orange, "%.0f", id(weather_lightning_count).state); // Lightning count
             } else {
-              it.printf(140, 175, id(my_font5), red, "N/A");
+              it.printf(157, 185, id(my_font5), red, "N/A");
             }
           }
          
