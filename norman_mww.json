@@ -1,8 +1,8 @@
 {
   "type": "micro",
   "wake_word": "hey norman",
-  "author": "master phooeyt",
-  "website": "https://norman",
+  "author": "master phooey",
+  "website": "https://github.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome",
   "model": "norman_mww.tflite",
   "version": 2,
   "micro": {
