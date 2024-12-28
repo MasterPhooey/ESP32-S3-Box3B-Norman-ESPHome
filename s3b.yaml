@@ -3,16 +3,16 @@
 ## Once added to HA changing the device name can lead to connection issues, between HA and the device.
 
 substitutions:
-  name: "norman-office"
-  friendly_name: Norman Office
+  name: "norman-game"
+  friendly_name: Norman Game
   timezone: "US/Central"
   outdoor_temp_sensor: "sensor.weather_outdoor_temperature"
-  indoor_temp_sensor: "sensor.office_temperature"
+  indoor_temp_sensor: "sensor.game_room_temperature"
   rain_rate_sensor: "sensor.weather_daily_rain_rate_piezo"
   wind_gust_sensor: "sensor.weather_max_daily_wind_gust"
   lightning_count_sensor: "sensor.weather_lightning_strikes"
 
-  external_media_player: norman_office_speaker_raspiaudio_muse_luxe_6d87e8  ##change this to your external media player enity_id: do not include media_player.
+  external_media_player: norman_office_speaker_raspiaudio_muse_luxe_1ea574  ##change this to your external media player enity_id: do not include media_player.
   home_assistant_host: http://homeassistant.local:8123 ##change to the full url or IP of your HA server including port
   tts_voice_speed: "24000" #options #nabu casa "24000" #piper "16000" elevenlabs "44100" must include quotes
   
@@ -21,10 +21,10 @@ substitutions:
 ####      you can use any of these without re-compiling - just say them!    #####
 #################################################################################
 # TO REMOVE A WAKE WORD - COMMENT OUT THE CORESPONDING LINE FROM THE CONFIG BELOW - CTRL + F to search for "models" 
-  micro_wake_word_model_1: alexa
-  micro_wake_word_model_2: hey_jarvis
-  micro_wake_word_model_3: okay_nabu # latest test can also be used >> replace okay_nabu with this url https://github.com/kahrendt/microWakeWord/releases/download/okay_nabu/okay_nabu.json
-  micro_wake_word_model_4: hey_mycroft
+  micro_wake_word_model_1: https://raw.githubusercontent.com/MasterPhooey/ESP32-S3-Box3B-Norman-ESPHome/refs/heads/main/norman_mww.json 
+  #micro_wake_word_model_2: hey_jarvis
+  #micro_wake_word_model_3: okay_nabu # latest test can also be used >> replace okay_nabu with this url https://github.com/kahrendt/microWakeWord/releases/download/okay_nabu/okay_nabu.json
+  #micro_wake_word_model_4: hey_mycroft
 ####################################################################
 
 #####  Days and months #####
@@ -888,9 +888,9 @@ micro_wake_word:
   vad:
   models: 
     - model: ${micro_wake_word_model_1}
-    - model: ${micro_wake_word_model_2}
-    - model: ${micro_wake_word_model_3}
-    - model: ${micro_wake_word_model_4}
+  #  - model: ${micro_wake_word_model_2}
+  #  - model: ${micro_wake_word_model_3}
+  #  - model: ${micro_wake_word_model_4}
   on_wake_word_detected:
     - if:
         condition:
